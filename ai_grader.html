@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Exam Grader Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .chat-bubble {
+            max-width: 80%;
+        }
+
+        .chat-bubble-user {
+            background-color: #3B82F6;
+            /* blue-500 */
+            color: white;
+        }
+
+        .chat-bubble-bot {
+            background-color: #E5E7EB;
+            /* gray-200 */
+            color: #1F2937;
+            /* gray-800 */
+        }
+
+        .file-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        #chat-container {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <!-- Upload View -->
+    <div id="upload-view" class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 flex flex-col transition-all">
+        <div class="flex items-center mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h1 class="text-2xl font-bold text-gray-800">AI Grader</h1>
+        </div>
+        <p class="text-gray-600 mb-6 flex-grow-0">Upload the solution key and student answer sheets to begin the
+            automated grading process.</p>
+
+        <div id="file-upload-section" class="flex-grow">
+            <!-- Solution Key Upload -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">1. Solution Key</label>
+                <div id="solution-key-dropzone"
+                    class="flex justify-center items-center w-full px-6 py-8 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div class="text-center">
+                        <svg class="mx-auto h-10 w-10 text-gray-400" stroke="currentColor" fill="none"
+                            viewBox="0 0 48 48" aria-hidden="true">
+                            <path
+                                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                        <p class="mt-1 text-sm text-gray-600">Click to upload or drag & drop</p>
+                    </div>
+                </div>
+                <div id="solution-key-file" class="hidden mt-2"></div>
+            </div>
+
+            <!-- Student Sheets Upload -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">2. Student Answer Sheets</label>
+                <div id="student-sheets-dropzone"
+                    class="flex justify-center items-center w-full px-6 py-8 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div class="text-center">
+                        <svg class="mx-auto h-10 w-10 text-gray-400" stroke="currentColor" fill="none"
+                            viewBox="0 0 48 48" aria-hidden="true">
+                            <path
+                                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                        <p class="mt-1 text-sm text-gray-600">Click to upload or drag & drop</p>
+                    </div>
+                </div>
+                <div id="student-sheets-file" class="hidden mt-2"></div>
+            </div>
+        </div>
+
+        <!-- Processing View -->
+        <div id="processing-view" class="hidden flex-grow flex flex-col items-center justify-center text-center">
+            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
+            <h2 class="text-lg font-semibold text-gray-700">Processing...</h2>
+            <p id="processing-status" class="text-sm text-gray-500 mt-2">Initializing grading pipeline...</p>
+            <style>
+                .loader {
+                    border-top-color: #3498db;
+                    animation: spin 1s linear infinite;
+                }
+
+                @keyframes spin {
+                    to {
+                        transform: rotate(360deg);
+                    }
+                }
+            </style>
+        </div>
+
+        <button id="grade-button"
+            class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all mt-6">
+            Start Grading
+        </button>
+    </div>
+
+    <!-- Chat View -->
+    <div id="chat-view" class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden hidden"
+        style="height: 85vh; min-height: 600px;">
+        <div class="flex-1 flex flex-col">
+            <!-- Chat Header -->
+            <div class="bg-gray-50 p-4 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-800">Grading Report: Student 123</h2>
+                    <p class="text-sm text-green-600 flex items-center">
+                        <span class="h-2 w-2 bg-green-500 rounded-full mr-2"></span>
+                        AI Grader Online
+                    </p>
+                </div>
+                <button id="reset-button"
+                    class="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors">
+                    Start New
+                </button>
+            </div>
+
+            <!-- Chat Messages -->
+            <div id="chat-container" class="flex-1 p-6 overflow-y-auto space-y-4">
+                <!-- Chat messages will be appended here -->
+            </div>
+
+            <!-- Chat Input -->
+            <div class="p-4 bg-white border-t border-gray-200">
+                <div class="flex items-center bg-gray-100 rounded-lg p-2">
+                    <input type="text" id="chat-input" placeholder="Ask about the results..."
+                        class="flex-1 bg-transparent border-none focus:ring-0 text-gray-800 placeholder-gray-500">
+                    <button id="send-button"
+                        class="ml-2 bg-blue-600 text-white rounded-lg p-2 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7"
+                                transform="rotate(-45 12 12) translate(-3, -3)" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const uploadView = document.getElementById('upload-view');
+        const chatView = document.getElementById('chat-view');
+
+        const gradeButton = document.getElementById('grade-button');
+        const fileUploadSection = document.getElementById('file-upload-section');
+        const processingView = document.getElementById('processing-view');
+        const processingStatus = document.getElementById('processing-status');
+
+        const chatContainer = document.getElementById('chat-container');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const resetButton = document.getElementById('reset-button');
+
+        const solutionKeyDropzone = document.getElementById('solution-key-dropzone');
+        const studentSheetsDropzone = document.getElementById('student-sheets-dropzone');
+        const solutionKeyFileDiv = document.getElementById('solution-key-file');
+        const studentSheetsFileDiv = document.getElementById('student-sheets-file');
+
+        let solutionFile = null;
+        let studentFile = null;
+
+        // --- Mock Data ---
+        const mockResults = {
+            studentId: '123',
+            totalScore: 82,
+            maxScore: 100,
+            questions: [
+                { id: 1, question: "What is the capital of France?", correctAnswer: "Paris", studentAnswer: "Paris", score: 10, maxScore: 10, explanation: "Correct." },
+                { id: 2, question: "What is H2O?", correctAnswer: "Water", studentAnswer: "Water", score: 10, maxScore: 10, explanation: "Correct." },
+                { id: 3, question: "Explain the process of photosynthesis.", correctAnswer: "Photosynthesis is the process used by plants, algae and certain bacteria to harness energy from sunlight and turn it into chemical energy.", studentAnswer: "It's how plants make food using sunlight.", score: 7, maxScore: 10, explanation: "The answer is conceptually correct but lacks key details like the conversion of light energy to chemical energy." },
+                { id: 4, question: "Solve for x: 2x + 5 = 15", correctAnswer: "x = 5", studentAnswer: "x=5", score: 10, maxScore: 10, explanation: "Correct." },
+            ]
+        };
+
+        // --- State Management ---
+        function updateButtonState() {
+            gradeButton.disabled = !(solutionFile && studentFile);
+        }
+
+        // --- File Handling Logic ---
+        function createFileItem(fileName) {
+            return `
+                <div class="file-item flex items-center bg-blue-100 text-blue-800 text-sm font-semibold px-4 py-2 rounded-lg transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <span>${fileName}</span>
+                </div>
+            `;
+        }
+
+        function handleFileUpload(dropzone, fileDiv, fileType) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (fileType === 'solution') solutionFile = file;
+                    else studentFile = file;
+
+                    dropzone.classList.add('hidden');
+                    fileDiv.innerHTML = createFileItem(file.name);
+                    fileDiv.classList.remove('hidden');
+                    updateButtonState();
+                }
+            };
+            input.click();
+        }
+
+        solutionKeyDropzone.addEventListener('click', () => handleFileUpload(solutionKeyDropzone, solutionKeyFileDiv, 'solution'));
+        studentSheetsDropzone.addEventListener('click', () => handleFileUpload(studentSheetsDropzone, studentSheetsFileDiv, 'student'));
+
+        // --- Grading Process Simulation ---
+        gradeButton.addEventListener('click', () => {
+            fileUploadSection.classList.add('hidden');
+            gradeButton.classList.add('hidden');
+            processingView.classList.remove('hidden');
+
+            const statuses = [
+                { text: 'Scanning documents...', delay: 1500 },
+                { text: 'Performing Optical Character Recognition (OCR)...', delay: 2000 },
+                { text: 'Extracting answers using NLP models...', delay: 2000 },
+                { text: 'Comparing with solution key...', delay: 1500 },
+                { text: 'Aggregating scores...', delay: 1000 },
+                { text: 'Grading complete!', delay: 500 },
+            ];
+
+            let totalDelay = 0;
+            statuses.forEach(status => {
+                setTimeout(() => {
+                    processingStatus.textContent = status.text;
+                }, totalDelay);
+                totalDelay += status.delay;
+            });
+
+            setTimeout(showChatInterface, totalDelay);
+        });
+
+        // --- Chat Interface Logic ---
+        function showChatInterface() {
+            uploadView.classList.add('hidden');
+            chatView.classList.remove('hidden');
+
+            // Clear any previous chat messages before starting a new session
+            chatContainer.innerHTML = '';
+
+            addBotMessage(`Grading is complete for Student ID: ${mockResults.studentId}. The total score is ${mockResults.totalScore} out of ${mockResults.maxScore}. How can I help you? You can ask for "total score", "show me question 3", or "why was question 3 marked partially?".`);
+        }
+
+        function addMessage(content, sender) {
+            const bubble = document.createElement('div');
+            bubble.classList.add('chat-bubble', 'p-3', 'rounded-lg', 'shadow-md');
+
+            if (sender === 'user') {
+                bubble.classList.add('chat-bubble-user', 'self-end', 'rounded-br-none');
+            } else {
+                bubble.classList.add('chat-bubble-bot', 'self-start', 'rounded-bl-none');
+            }
+            bubble.innerHTML = content; // Using innerHTML to render formatted responses
+            chatContainer.appendChild(bubble);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function addBotMessage(message) {
+            addMessage(message, 'bot');
+        }
+
+        function addUserMessage(message) {
+            addMessage(message, 'user');
+        }
+
+        function handleUserInput() {
+            const userInput = chatInput.value.trim().toLowerCase();
+            if (!userInput) return;
+
+            addUserMessage(chatInput.value);
+            chatInput.value = '';
+
+            setTimeout(() => processUserQuery(userInput), 500);
+        }
+
+        function processUserQuery(query) {
+            if (query.includes('total score') || query.includes('final score')) {
+                addBotMessage(`The final score is <strong>${mockResults.totalScore}/${mockResults.maxScore}</strong>.`);
+            } else if (query.match(/question\s+(\d+)/)) {
+                const questionNum = parseInt(query.match(/question\s+(\d+)/)[1]);
+                const question = mockResults.questions.find(q => q.id === questionNum);
+
+                if (question) {
+                    const response = `
+                        <div class="font-semibold text-gray-800 mb-2">Details for Question ${question.id}:</div>
+                        <div class="text-sm space-y-3">
+                            <p><strong>Question:</strong> ${question.question}</p>
+                            <div class="p-3 bg-green-100 text-green-900 rounded-lg"><strong>Correct Answer:</strong> ${question.correctAnswer}</div>
+                            <div class="p-3 bg-red-100 text-red-900 rounded-lg"><strong>Student's Answer:</strong> ${question.studentAnswer}</div>
+                            <p><strong>Score:</strong> ${question.score} / ${question.maxScore}</p>
+                            <p><strong>AI Explanation:</strong> ${question.explanation}</p>
+                        </div>
+                    `;
+                    addBotMessage(response);
+                } else {
+                    addBotMessage(`Sorry, I couldn't find question number ${questionNum}.`);
+                }
+            } else if (query.includes('why') && query.match(/question\s+(\d+)/)) {
+                const questionNum = parseInt(query.match(/question\s+(\d+)/)[1]);
+                const question = mockResults.questions.find(q => q.id === questionNum);
+                if (question) {
+                    addBotMessage(`For Question ${question.id}, the AI provided this explanation: "${question.explanation}"`);
+                } else {
+                    addBotMessage(`I can't find that question. Please specify a valid question number.`);
+                }
+            } else if (query.includes('hello') || query.includes('hi')) {
+                addBotMessage("Hello! How can I help you with this student's results?");
+            } else if (query.includes('all questions') || query.includes('summary')) {
+                let summary = '<div class="font-semibold text-gray-800 mb-2">Full Summary:</div>';
+                mockResults.questions.forEach(q => {
+                    summary += `<div class="p-2 border-b border-gray-200">Q${q.id}: ${q.studentAnswer.substring(0, 20)}... | Score: ${q.score}/${q.maxScore}</div>`;
+                });
+                addBotMessage(summary);
+            }
+            else {
+                addBotMessage("I'm not sure how to answer that. You can ask me for the 'total score' or for details on a specific question, like 'show me question 2'.");
+            }
+        }
+
+        sendButton.addEventListener('click', handleUserInput);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleUserInput();
+            }
+        });
+
+        // --- Reset Logic ---
+        resetButton.addEventListener('click', () => {
+            // Reset state variables
+            solutionFile = null;
+            studentFile = null;
+
+            // Hide chat and show upload view
+            chatView.classList.add('hidden');
+            uploadView.classList.remove('hidden');
+
+            // Reset upload view to its initial state
+            fileUploadSection.classList.remove('hidden');
+            processingView.classList.add('hidden');
+            gradeButton.classList.remove('hidden');
+
+            solutionKeyDropzone.classList.remove('hidden');
+            solutionKeyFileDiv.classList.add('hidden');
+            studentSheetsDropzone.classList.remove('hidden');
+            studentSheetsFileDiv.classList.add('hidden');
+
+            chatContainer.innerHTML = '';
+
+            updateButtonState();
+        });
+
+        // Initial state
+        updateButtonState();
+
+    </script>
+</body>
+
+</html>
