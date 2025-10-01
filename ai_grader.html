@@ -18,15 +18,12 @@
 
         .chat-bubble-user {
             background-color: #3B82F6;
-            /* blue-500 */
             color: white;
         }
 
         .chat-bubble-bot {
             background-color: #E5E7EB;
-            /* gray-200 */
             color: #1F2937;
-            /* gray-800 */
         }
 
         .file-item:hover {
@@ -36,6 +33,17 @@
 
         #chat-container {
             scroll-behavior: smooth;
+        }
+
+        .loader {
+            border-top-color: #3498db;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
@@ -98,18 +106,6 @@
             <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
             <h2 class="text-lg font-semibold text-gray-700">Processing...</h2>
             <p id="processing-status" class="text-sm text-gray-500 mt-2">Initializing grading pipeline...</p>
-            <style>
-                .loader {
-                    border-top-color: #3498db;
-                    animation: spin 1s linear infinite;
-                }
-
-                @keyframes spin {
-                    to {
-                        transform: rotate(360deg);
-                    }
-                }
-            </style>
         </div>
 
         <button id="grade-button"
@@ -122,27 +118,17 @@
     <div id="chat-view" class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden hidden"
         style="height: 85vh; min-height: 600px;">
         <div class="flex-1 flex flex-col">
-            <!-- Chat Header -->
             <div class="bg-gray-50 p-4 border-b border-gray-200 flex items-center justify-between">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-800">Grading Report: Student 123</h2>
-                    <p class="text-sm text-green-600 flex items-center">
-                        <span class="h-2 w-2 bg-green-500 rounded-full mr-2"></span>
-                        AI Grader Online
-                    </p>
+                    <p class="text-sm text-green-600 flex items-center"><span
+                            class="h-2 w-2 bg-green-500 rounded-full mr-2"></span>AI Grader Online</p>
                 </div>
                 <button id="reset-button"
-                    class="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors">
-                    Start New
-                </button>
+                    class="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors">Start
+                    New</button>
             </div>
-
-            <!-- Chat Messages -->
-            <div id="chat-container" class="flex-1 p-6 overflow-y-auto space-y-4">
-                <!-- Chat messages will be appended here -->
-            </div>
-
-            <!-- Chat Input -->
+            <div id="chat-container" class="flex-1 p-6 overflow-y-auto space-y-4"></div>
             <div class="p-4 bg-white border-t border-gray-200">
                 <div class="flex items-center bg-gray-100 rounded-lg p-2">
                     <input type="text" id="chat-input" placeholder="Ask about the results..."
@@ -161,20 +147,16 @@
     </div>
 
     <script>
-        // --- DOM Elements ---
         const uploadView = document.getElementById('upload-view');
         const chatView = document.getElementById('chat-view');
-
         const gradeButton = document.getElementById('grade-button');
         const fileUploadSection = document.getElementById('file-upload-section');
         const processingView = document.getElementById('processing-view');
         const processingStatus = document.getElementById('processing-status');
-
         const chatContainer = document.getElementById('chat-container');
         const chatInput = document.getElementById('chat-input');
         const sendButton = document.getElementById('send-button');
         const resetButton = document.getElementById('reset-button');
-
         const solutionKeyDropzone = document.getElementById('solution-key-dropzone');
         const studentSheetsDropzone = document.getElementById('student-sheets-dropzone');
         const solutionKeyFileDiv = document.getElementById('solution-key-file');
@@ -182,8 +164,8 @@
 
         let solutionFile = null;
         let studentFile = null;
+        let gradingResults = null; // To store results from the backend
 
-        // --- Mock Data ---
         const mockResults = {
             studentId: '123',
             totalScore: 82,
@@ -196,19 +178,12 @@
             ]
         };
 
-        // --- State Management ---
         function updateButtonState() {
             gradeButton.disabled = !(solutionFile && studentFile);
         }
 
-        // --- File Handling Logic ---
         function createFileItem(fileName) {
-            return `
-                <div class="file-item flex items-center bg-blue-100 text-blue-800 text-sm font-semibold px-4 py-2 rounded-lg transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    <span>${fileName}</span>
-                </div>
-            `;
+            return `<div class="file-item flex items-center bg-blue-100 text-blue-800 text-sm font-semibold px-4 py-2 rounded-lg transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><span>${fileName}</span></div>`;
         }
 
         function handleFileUpload(dropzone, fileDiv, fileType) {
@@ -219,7 +194,6 @@
                 if (file) {
                     if (fileType === 'solution') solutionFile = file;
                     else studentFile = file;
-
                     dropzone.classList.add('hidden');
                     fileDiv.innerHTML = createFileItem(file.name);
                     fileDiv.classList.remove('hidden');
@@ -232,154 +206,151 @@
         solutionKeyDropzone.addEventListener('click', () => handleFileUpload(solutionKeyDropzone, solutionKeyFileDiv, 'solution'));
         studentSheetsDropzone.addEventListener('click', () => handleFileUpload(studentSheetsDropzone, studentSheetsFileDiv, 'student'));
 
-        // --- Grading Process Simulation ---
-        gradeButton.addEventListener('click', () => {
+        // --- CONNECT TO BACKEND ---
+        gradeButton.addEventListener('click', async () => {
             fileUploadSection.classList.add('hidden');
             gradeButton.classList.add('hidden');
             processingView.classList.remove('hidden');
+            processingStatus.textContent = "Uploading files to server...";
 
-            const statuses = [
-                { text: 'Scanning documents...', delay: 1500 },
-                { text: 'Performing Optical Character Recognition (OCR)...', delay: 2000 },
-                { text: 'Extracting answers using NLP models...', delay: 2000 },
-                { text: 'Comparing with solution key...', delay: 1500 },
-                { text: 'Aggregating scores...', delay: 1000 },
-                { text: 'Grading complete!', delay: 500 },
-            ];
+            const formData = new FormData();
+            formData.append('solutionKey', solutionFile);
+            formData.append('studentSheet', studentFile);
 
-            let totalDelay = 0;
-            statuses.forEach(status => {
-                setTimeout(() => {
+            try {
+                // Send files to the Django backend
+                const response = await fetch('http://127.0.0.1:8000/api/grade/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}`);
+                }
+
+                // For now, we get a simple message. Later, this will be the JSON result.
+                const result = await response.json();
+                console.log('Server response:', result.message);
+
+                // In a real app, you would get the grading data back:
+                // gradingResults = await response.json();
+                // For now, we will continue to use the mock data for the chat.
+                gradingResults = mockResults;
+
+                // --- Start frontend simulation AFTER successful upload ---
+                const statuses = [
+                    { text: 'Scanning documents...', delay: 1000 },
+                    { text: 'Performing Optical Character Recognition (OCR)...', delay: 1500 },
+                    { text: 'Extracting answers using NLP models...', delay: 1500 },
+                    { text: 'Grading complete!', delay: 500 },
+                ];
+
+                let totalDelay = 0;
+                for (const status of statuses) {
+                    await new Promise(resolve => setTimeout(resolve, status.delay));
                     processingStatus.textContent = status.text;
-                }, totalDelay);
-                totalDelay += status.delay;
-            });
+                }
 
-            setTimeout(showChatInterface, totalDelay);
+                showChatInterface();
+
+            } catch (error) {
+                console.error('Error connecting to backend:', error);
+                processingStatus.textContent = "Error: Could not connect to the backend. Is it running?";
+                setTimeout(() => {
+                    processingView.classList.add('hidden');
+                    fileUploadSection.classList.remove('hidden');
+                    gradeButton.classList.remove('hidden');
+                }, 4000);
+            }
         });
 
-        // --- Chat Interface Logic ---
         function showChatInterface() {
             uploadView.classList.add('hidden');
             chatView.classList.remove('hidden');
-
-            // Clear any previous chat messages before starting a new session
             chatContainer.innerHTML = '';
-
-            addBotMessage(`Grading is complete for Student ID: ${mockResults.studentId}. The total score is ${mockResults.totalScore} out of ${mockResults.maxScore}. How can I help you? You can ask for "total score", "show me question 3", or "why was question 3 marked partially?".`);
+            addBotMessage(`Grading is complete. The total score is ${gradingResults.totalScore} out of ${gradingResults.maxScore}. How can I help you?`);
         }
 
         function addMessage(content, sender) {
             const bubble = document.createElement('div');
             bubble.classList.add('chat-bubble', 'p-3', 'rounded-lg', 'shadow-md');
-
             if (sender === 'user') {
                 bubble.classList.add('chat-bubble-user', 'self-end', 'rounded-br-none');
             } else {
                 bubble.classList.add('chat-bubble-bot', 'self-start', 'rounded-bl-none');
             }
-            bubble.innerHTML = content; // Using innerHTML to render formatted responses
+            bubble.innerHTML = content;
             chatContainer.appendChild(bubble);
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        function addBotMessage(message) {
-            addMessage(message, 'bot');
-        }
-
-        function addUserMessage(message) {
-            addMessage(message, 'user');
-        }
+        function addBotMessage(message) { addMessage(message, 'bot'); }
+        function addUserMessage(message) { addMessage(message, 'user'); }
 
         function handleUserInput() {
             const userInput = chatInput.value.trim().toLowerCase();
             if (!userInput) return;
-
             addUserMessage(chatInput.value);
             chatInput.value = '';
-
             setTimeout(() => processUserQuery(userInput), 500);
         }
 
         function processUserQuery(query) {
             if (query.includes('total score') || query.includes('final score')) {
-                addBotMessage(`The final score is <strong>${mockResults.totalScore}/${mockResults.maxScore}</strong>.`);
+                addBotMessage(`The final score is <strong>${gradingResults.totalScore}/${gradingResults.maxScore}</strong>.`);
             } else if (query.match(/question\s+(\d+)/)) {
                 const questionNum = parseInt(query.match(/question\s+(\d+)/)[1]);
-                const question = mockResults.questions.find(q => q.id === questionNum);
+                const question = gradingResults.questions.find(q => q.id === questionNum);
 
                 if (question) {
-                    const response = `
-                        <div class="font-semibold text-gray-800 mb-2">Details for Question ${question.id}:</div>
-                        <div class="text-sm space-y-3">
-                            <p><strong>Question:</strong> ${question.question}</p>
-                            <div class="p-3 bg-green-100 text-green-900 rounded-lg"><strong>Correct Answer:</strong> ${question.correctAnswer}</div>
-                            <div class="p-3 bg-red-100 text-red-900 rounded-lg"><strong>Student's Answer:</strong> ${question.studentAnswer}</div>
-                            <p><strong>Score:</strong> ${question.score} / ${question.maxScore}</p>
-                            <p><strong>AI Explanation:</strong> ${question.explanation}</p>
-                        </div>
-                    `;
+                    const response = `<div class="font-semibold text-gray-800 mb-2">Details for Question ${question.id}:</div><div class="text-sm space-y-3"><p><strong>Question:</strong> ${question.question}</p><div class="p-3 bg-green-100 text-green-900 rounded-lg"><strong>Correct Answer:</strong> ${question.correctAnswer}</div><div class="p-3 bg-red-100 text-red-900 rounded-lg"><strong>Student's Answer:</strong> ${question.studentAnswer}</div><p><strong>Score:</strong> ${question.score} / ${question.maxScore}</p><p><strong>AI Explanation:</strong> ${question.explanation}</p></div>`;
                     addBotMessage(response);
                 } else {
                     addBotMessage(`Sorry, I couldn't find question number ${questionNum}.`);
                 }
             } else if (query.includes('why') && query.match(/question\s+(\d+)/)) {
                 const questionNum = parseInt(query.match(/question\s+(\d+)/)[1]);
-                const question = mockResults.questions.find(q => q.id === questionNum);
+                const question = gradingResults.questions.find(q => q.id === questionNum);
                 if (question) {
                     addBotMessage(`For Question ${question.id}, the AI provided this explanation: "${question.explanation}"`);
                 } else {
                     addBotMessage(`I can't find that question. Please specify a valid question number.`);
                 }
-            } else if (query.includes('hello') || query.includes('hi')) {
-                addBotMessage("Hello! How can I help you with this student's results?");
-            } else if (query.includes('all questions') || query.includes('summary')) {
+            } else if (query.includes('summary')) {
                 let summary = '<div class="font-semibold text-gray-800 mb-2">Full Summary:</div>';
-                mockResults.questions.forEach(q => {
+                gradingResults.questions.forEach(q => {
                     summary += `<div class="p-2 border-b border-gray-200">Q${q.id}: ${q.studentAnswer.substring(0, 20)}... | Score: ${q.score}/${q.maxScore}</div>`;
                 });
                 addBotMessage(summary);
             }
             else {
-                addBotMessage("I'm not sure how to answer that. You can ask me for the 'total score' or for details on a specific question, like 'show me question 2'.");
+                addBotMessage("I'm not sure how to answer that. You can ask for the 'total score' or for details on a specific question, like 'show me question 2'.");
             }
         }
 
         sendButton.addEventListener('click', handleUserInput);
         chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleUserInput();
-            }
+            if (e.key === 'Enter') handleUserInput();
         });
 
-        // --- Reset Logic ---
         resetButton.addEventListener('click', () => {
-            // Reset state variables
             solutionFile = null;
             studentFile = null;
-
-            // Hide chat and show upload view
+            gradingResults = null;
             chatView.classList.add('hidden');
             uploadView.classList.remove('hidden');
-
-            // Reset upload view to its initial state
             fileUploadSection.classList.remove('hidden');
             processingView.classList.add('hidden');
             gradeButton.classList.remove('hidden');
-
             solutionKeyDropzone.classList.remove('hidden');
             solutionKeyFileDiv.classList.add('hidden');
             studentSheetsDropzone.classList.remove('hidden');
             studentSheetsFileDiv.classList.add('hidden');
-
             chatContainer.innerHTML = '';
-
             updateButtonState();
         });
 
-        // Initial state
         updateButtonState();
-
     </script>
 </body>
 
