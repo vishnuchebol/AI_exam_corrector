@@ -7,7 +7,7 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv()
+load_dotenv("project.env")
 
 # --- (Keep your existing _parse_string_content and create_structured_data functions here) ---
 
@@ -56,13 +56,14 @@ def grade_answers_with_ai(structured_data):
         genai.configure(api_key=api_key)
         
         # Initialize the generative model
-        model = genai.GenerativeModel('gemini-1.5-pro-latest')
-        
+# Initialize the generative model
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        # OR you can use:
+        # model = genai.GenerativeModel('gemini-1.0-pro')        
     except Exception as e:
         # Handle cases where the API key is missing or invalid
         print(f"Error configuring AI model: {e}")
         return {"error": str(e)}, 0
-
     total_score = 0
     graded_results = []
 
