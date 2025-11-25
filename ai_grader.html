@@ -21,53 +21,61 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        /* Custom number input styling */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
     <!-- Upload View -->
-    <div id="upload-view" class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 flex flex-col transition-all">
-        <div class="flex items-center mb-6">
+    <div id="upload-view" class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl p-8 flex flex-col transition-all">
+        
+        <div class="flex items-center mb-6 justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h1 class="text-2xl font-bold text-gray-800">AI Grader</h1>
+            <h1 class="text-3xl font-bold text-gray-800">AI Grader</h1>
         </div>
-        <p class="text-gray-600 mb-6 flex-grow-0">Upload the solution key and student answer sheets to begin the automated grading process.</p>
+        <p class="text-gray-600 mb-8 text-center flex-grow-0">Upload the solution key and student answer sheets to begin the automated grading process.</p>
         
         <div id="file-upload-section" class="flex-grow">
-            <!-- Solution Key Upload -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">1. Solution Key (.txt)</label>
-                <div id="solution-key-dropzone" class="flex justify-center items-center w-full px-6 py-8 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                    <div class="text-center">
-                         <svg class="mx-auto h-10 w-10 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                        <p class="mt-1 text-sm text-gray-600">Click to upload or drag & drop</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Box 1: Solution Key -->
+                <div class="flex flex-col">
+                    <label class="block text-lg font-semibold text-gray-700 mb-3">1. Solution Key (.txt)</label>
+                    <div id="solution-key-dropzone" class="flex flex-col justify-center items-center w-full px-6 py-16 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 flex-grow">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                        <p class="mt-2 text-sm text-gray-600">Click to upload or drag & drop</p>
                     </div>
+                    <div id="solution-key-file" class="hidden mt-4"></div> 
                 </div>
-                <div id="solution-key-file" class="hidden mt-2"></div>
-            </div>
-            <!-- Student Sheets Upload -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">2. Student Answer Sheet (.txt)</label>
-                <div id="student-sheets-dropzone" class="flex justify-center items-center w-full px-6 py-8 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                    <div class="text-center">
-                        <svg class="mx-auto h-10 w-10 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                        <p class="mt-1 text-sm text-gray-600">Click to upload or drag & drop</p>
+
+                <!-- Box 2: Student Answer Sheet -->
+                <div class="flex flex-col">
+                    <label class="block text-lg font-semibold text-gray-700 mb-3">2. Student Answer Sheet (.txt)</label>
+                    <div id="student-sheets-dropzone" class="flex flex-col justify-center items-center w-full px-6 py-16 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 flex-grow">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                        <p class="mt-2 text-sm text-gray-600">Click to upload or drag & drop</p>
                     </div>
+                    <div id="student-sheets-file" class="hidden mt-4"></div>
                 </div>
-                <div id="student-sheets-file" class="hidden mt-2"></div>
             </div>
         </div>
 
-        <!-- Processing View -->
-        <div id="processing-view" class="hidden flex-grow flex flex-col items-center justify-center text-center">
+        <div id="processing-view" class="hidden flex-grow flex flex-col items-center justify-center text-center py-20">
             <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
             <h2 class="text-lg font-semibold text-gray-700">Grading in Progress...</h2>
             <p id="processing-status" class="text-sm text-gray-500 mt-2">Contacting AI grading service...</p>
         </div>
 
-        <button id="grade-button" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all mt-6">
+        <button id="grade-button" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all mt-8">
             Start Grading
         </button>
     </div>
@@ -87,7 +95,7 @@
         
         <!-- Report Body -->
         <div id="report-container" class="flex-1 p-6 overflow-y-auto bg-gray-100 space-y-6">
-            <!-- Summary and Question Cards will be injected here by JS -->
+            <!-- Content Injected Here -->
         </div>
     </div>
 
@@ -119,7 +127,7 @@
     function handleFileUpload(dropzone, fileDiv, fileType) {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = ".txt"; // Only accept text files as per backend
+        input.accept = ".txt"; 
         input.onchange = e => {
             const file = e.target.files[0];
             if (file) {
@@ -160,8 +168,6 @@
             }
             
             const backendResults = await response.json();
-            console.log("Received from Django:", backendResults);
-
             processingStatus.textContent = "Formatting report...";
             await new Promise(resolve => setTimeout(resolve, 500)); 
 
@@ -169,8 +175,8 @@
             showResultsInterface(formattedResults);
 
         } catch (error) {
-            console.error('Error during grading process:', error);
-            processingStatus.textContent = `Error: ${error.message}. Please try again.`;
+            console.error('Error:', error);
+            processingStatus.textContent = `Error: ${error.message}.`;
             setTimeout(() => {
                 processingView.classList.add('hidden');
                 fileUploadSection.classList.remove('hidden');
@@ -179,25 +185,26 @@
         }
     });
     
-    // This function converts the backend JSON into the format the UI function expects
     function formatBackendResponse(backendData) {
         let totalMaxScore = 0;
-
         const formattedQuestions = backendData.graded_questions.map(q => {
-            // --- UPDATED LOGIC ---
-            // Looks for "Total:" or the typo "Toatal:"
             const match = q.marking_scheme.match(/T[oa]tal: (\d+) marks?/i);
             const maxScore = match ? parseInt(match[1], 10) : 0;
             totalMaxScore += maxScore;
 
+            // DETECT IF REVIEW IS NEEDED
+            // If score is null/undefined OR if the justification explicitly mentions "different method"
+            const needsReview = q.score_awarded === null || (q.justification && q.justification.toLowerCase().includes("different method"));
+
             return {
                 id: q.question_number,
-                question: q.solution_text.split('\n')[0], // Use the first line as the question
+                question: q.solution_text.split('\n')[0],
                 correctAnswer: q.solution_text,
                 studentAnswer: q.student_answer,
-                score: q.score_awarded, // Corrected syntax error here (removed space)
+                score: q.score_awarded,
                 maxScore: maxScore,
-                explanation: q.justification
+                explanation: q.justification,
+                needsReview: needsReview
             };
         });
 
@@ -208,63 +215,123 @@
         };
     }
 
+    function recalculateTotal() {
+        let newTotal = 0;
+        let maxTotal = 0;
+        
+        // Loop through all score inputs
+        document.querySelectorAll('.score-input').forEach(input => {
+            const val = parseFloat(input.value);
+            const max = parseFloat(input.dataset.max);
+            
+            if (!isNaN(val)) {
+                newTotal += val;
+            }
+            maxTotal += max;
+        });
+
+        // Update the Summary Display
+        const scoreDisplay = document.getElementById('total-score-display');
+        const progressBar = document.getElementById('total-progress-bar');
+        const percentageText = document.getElementById('total-percentage');
+
+        scoreDisplay.innerHTML = `${newTotal} <span class="text-2xl text-gray-400">/ ${maxTotal}</span>`;
+        
+        const percentage = maxTotal > 0 ? (newTotal / maxTotal) * 100 : 0;
+        progressBar.style.width = `${percentage}%`;
+        percentageText.textContent = `${percentage.toFixed(1)}%`;
+    }
 
     function showResultsInterface(results) {
         uploadView.classList.add('hidden');
         resultsView.classList.remove('hidden');
-        
         reportContainer.innerHTML = ''; 
 
-        // 1. Create and append the Summary Card
+        // 1. Summary Card
         const percentage = results.maxScore > 0 ? (results.totalScore / results.maxScore) * 100 : 0;
         const summaryCard = `
-            <div class="bg-white p-6 rounded-xl shadow-lg">
+            <div class="bg-white p-6 rounded-xl shadow-lg mb-6 sticky top-0 z-10 border-b-4 border-blue-600">
                 <h2 class="text-xl font-bold text-gray-800 mb-4">Summary</h2>
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <p class="text-gray-600">Final Score</p>
-                        <p class="text-4xl font-bold text-blue-600">${results.totalScore} <span class="text-2xl text-gray-400">/ ${results.maxScore}</span></p>
+                        <p id="total-score-display" class="text-4xl font-bold text-blue-600">${results.totalScore} <span class="text-2xl text-gray-400">/ ${results.maxScore}</span></p>
                     </div>
                     <div class="flex-grow">
                         <div class="w-full bg-gray-200 rounded-full h-4">
-                            <div class="bg-blue-600 h-4 rounded-full" style="width: ${percentage}%"></div>
+                            <div id="total-progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
                         </div>
-                        <p class="text-right text-sm font-semibold text-gray-700 mt-1">${percentage.toFixed(1)}%</CORS_ALLOW_ALL_ORIGINS>
+                        <p id="total-percentage" class="text-right text-sm font-semibold text-gray-700 mt-1">${percentage.toFixed(1)}%</p>
                     </div>
                 </div>
             </div>`;
         reportContainer.insertAdjacentHTML('beforeend', summaryCard);
 
-        // 2. Create and append Question Cards
+        // 2. Question Cards
         results.questions.forEach(q => {
+            
+            // Determine styling based on Review Status
+            const isReview = q.needsReview;
+            const borderColor = isReview ? 'border-amber-400' : 'border-gray-200';
+            const headerBg = isReview ? 'bg-amber-50' : 'bg-white';
+            const scoreColor = isReview ? 'text-amber-600' : 'text-blue-600';
+            
+            // If review needed, value is empty to force input. If scored, show score.
+            const inputValue = (q.score !== null && !isNaN(q.score)) ? q.score : ''; 
+
             const questionCard = `
-                <div class="bg-white p-6 rounded-xl shadow-lg">
-                    <div class="flex justify-between items-start mb-4 pb-4 border-b">
-                        <div>
-                            <p class="text-sm text-gray-500">Question ${q.id}</p>
+                <div class="bg-white p-6 rounded-xl shadow-lg border-2 ${borderColor}">
+                    <!-- Question Header with Manual Score Input -->
+                    <div class="flex justify-between items-start mb-4 pb-4 border-b ${headerBg} -m-6 p-6 rounded-t-xl">
+                        <div class="w-3/4">
+                            <div class="flex items-center gap-2 mb-1">
+                                <p class="text-sm text-gray-500">Question ${q.id}</p>
+                                ${isReview ? '<span class="px-2 py-0.5 text-xs font-bold bg-amber-200 text-amber-800 rounded-full">NEEDS REVIEW</span>' : ''}
+                            </div>
                             <h3 class="font-semibold text-gray-800">${q.question}</h3>
                         </div>
-                        <div class="text-right flex-shrink-0 ml-4">
-                             <p class_name="text-lg font-bold ${q.score === q.maxScore ? 'text-green-600' : 'text-blue-600'}">${q.score} <span class="text-base text-gray-400">/ ${q.maxScore}</span></p>
+                        <div class="text-right flex-shrink-0 ml-4 flex flex-col items-end">
+                             <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-500">Score:</span>
+                                <input 
+                                    type="number" 
+                                    class="score-input w-20 p-2 text-right font-bold text-lg border rounded-md focus:ring-2 focus:ring-blue-500 outline-none ${scoreColor}"
+                                    value="${inputValue}" 
+                                    data-max="${q.maxScore}"
+                                    min="0" 
+                                    max="${q.maxScore}"
+                                    step="0.5"
+                                    oninput="recalculateTotal()"
+                                >
+                                <span class="text-xl text-gray-400 font-light">/ ${q.maxScore}</span>
+                             </div>
                         </div>
                     </div>
-                    <div class="space-y-4 text-sm">
+                    
+                    <!-- Answers & Justification -->
+                    <div class="space-y-4 text-sm mt-6">
                         <div class="p-4 bg-yellow-50 text-yellow-900 rounded-lg border border-yellow-200">
                             <strong class="font-semibold block mb-1">Student's Answer:</strong>
-                            <p class="whitespace-pre-wrap">${q.studentAnswer}</p>
+                            <p class="whitespace-pre-wrap font-mono text-xs md:text-sm">${q.studentAnswer}</p>
                         </div>
                         <div class="p-4 bg-green-50 text-green-900 rounded-lg border border-green-200">
                             <strong class="font-semibold block mb-1">Correct Answer & Scheme:</strong>
-                            <p class="whitespace-pre-wrap">${q.correctAnswer}</p>
+                            <p class="whitespace-pre-wrap font-mono text-xs md:text-sm">${q.correctAnswer}</p>
                         </div>
                     </div>
+                    
                     <div class="mt-4 pt-4 border-t border-gray-200">
-                        <p class="text-sm font-semibold text-gray-700">AI Justification:</p>
-                        <p class="text-sm text-gray-600 mt-1">${q.explanation}</p>
+                        <p class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                            ${isReview ? '⚠️ AI Flag:' : 'AI Justification:'}
+                        </p>
+                        <p class="text-sm text-gray-600 mt-1 italic">${q.explanation}</p>
                     </div>
                 </div>`;
             reportContainer.insertAdjacentHTML('beforeend', questionCard);
         });
+        
+        // Run once to set initial total if there are manual/null entries
+        recalculateTotal();
     }
 
     resetButton.addEventListener('click', () => {
@@ -272,13 +339,16 @@
         studentFile = null;
         resultsView.classList.add('hidden');
         uploadView.classList.remove('hidden');
+        
         fileUploadSection.classList.remove('hidden');
-        processingView.classList.add('hidden');
         gradeButton.classList.remove('hidden');
+        processingView.classList.add('hidden');
+        
         solutionKeyDropzone.classList.remove('hidden');
         solutionKeyFileDiv.classList.add('hidden');
         studentSheetsDropzone.classList.remove('hidden');
         studentSheetsFileDiv.classList.add('hidden');
+        
         reportContainer.innerHTML = '';
         updateButtonState();
     });
@@ -287,4 +357,3 @@
 </script>
 </body>
 </html>
-

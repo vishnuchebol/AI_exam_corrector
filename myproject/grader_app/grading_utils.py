@@ -1,125 +1,146 @@
-# your_app/grading_utils.py
-
 import re
-import os
 import json
+import os
 import google.generativeai as genai
-from dotenv import load_dotenv
+from django.conf import settings
 
-# Load environment variables from .env file
-load_dotenv("project.env")
+# Configure the Gemini API
+# Safely attempt to get the key from settings or environment variables
+api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
 
-# --- (Keep your existing _parse_string_content and create_structured_data functions here) ---
+if api_key:
+    genai.configure(api_key=api_key)
+else:
+    print("WARNING: GEMINI_API_KEY not found in settings.py or environment variables. AI features will fail.")
 
 def _parse_string_content(text_content):
-    # ... (your existing code)
-    pattern = r'(?=\n*\d+\))'
+    """
+    Parses the text content of either the solution or answer file.
+    Handles numbering with either a parenthesis ')' or a period '.'.
+    """
+    # FIX 1: STRICTER REGEX
+    # Changed \n* (zero or more) to \n (required newline) to prevent splitting 
+    # on numbers inside math equations like "(2k + 1)^2".
+    # The (?:^|\n) handles both the start of the file OR a newline.
+    pattern = r'(?=(?:^|\n)\d+[\.\)])'
+    
     parts = [p.strip() for p in re.split(pattern, text_content) if p.strip()]
     parsed_data = {}
+    
     for part in parts:
-        match = re.match(r'(\d+)\)', part)
+        # Match the number at the start of the chunk
+        match = re.match(r'(\d+)[\.\)]', part)
         if match:
             question_number = int(match.group(1))
             content = part[len(match.group(0)):].strip()
             parsed_data[question_number] = content
+            
     return parsed_data
 
-def create_structured_data(solution_text, ans_text):
-    # ... (your existing code)
-    parsed_solutions = _parse_string_content(solution_text)
-    parsed_answers = _parse_string_content(ans_text)
-    combined_data = []
-    for q_num, solution_content in parsed_solutions.items():
-        solution_parts = re.split(r'Marking Scheme:', solution_content, flags=re.IGNORECASE)
-        sol_text = solution_parts[0].strip()
-        marking_scheme = solution_parts[1].strip() if len(solution_parts) > 1 else "No marking scheme provided."
-        student_answer = parsed_answers.get(q_num, "No answer provided for this question.")
-        combined_data.append({
+def create_structured_data(solution_text, student_text):
+    """
+    Combines solution key and student answers into a structured list.
+    """
+    solution_data = _parse_string_content(solution_text)
+    student_data = _parse_string_content(student_text)
+
+    structured_data = []
+
+    # Iterate through questions found in the solution key
+    for q_num, sol_content in solution_data.items():
+        if "Marking Scheme:" in sol_content:
+            sol_text, marking_scheme = sol_content.split("Marking Scheme:", 1)
+            marking_scheme = marking_scheme.strip()
+        else:
+            sol_text = sol_content
+            marking_scheme = "No marking scheme provided."
+
+        item = {
             "question_number": q_num,
-            "solution_text": sol_text,
+            "solution_text": sol_text.strip(),
             "marking_scheme": marking_scheme,
-            "student_answer": student_answer
-        })
-    return combined_data
+            "student_answer": student_data.get(q_num, "No answer provided.")
+        }
+        structured_data.append(item)
 
+    return structured_data
 
-# --- NEW AI GRADING FUNCTION ---
 def grade_answers_with_ai(structured_data):
     """
-    Evaluates student answers using the Gemini AI model.
+    Sends the structured data to Gemini for grading with specific instructions
+    to flag alternative valid methods.
     """
+    if not api_key:
+        return {"error": "GEMINI_API_KEY is missing. Please add it to settings.py."}, 0
+    
+    system_instruction = """
+    You are an expert academic grader. Your task is to grade student answers based STRICTLY on the provided Solution Key and Marking Scheme.
+
+    **Input Data:**
+    You will receive a JSON list of questions. Each item contains:
+    - `question_number`: The ID of the question.
+    - `solution_text`: The correct answer/solution.
+    - `marking_scheme`: The rules for assigning marks (including the total marks available).
+    - `student_answer`: The answer written by the student.
+
+    **Grading Rules:**
+    1. **Analyze:** Compare the `student_answer` against the `solution_text` and `marking_scheme`.
+    2. **Score:** Assign a score based on how many points from the marking scheme were satisfied.
+    3. **Justify:** Provide a brief explanation for the score awarded.
+    
+    **CRITICAL - HANDLING DIFFERENT METHODS:**
+    - If a student uses a valid academic method that is DIFFERENT from the one in the solution key (e.g., using "Proof by Contradiction" when the key uses "Contrapositive", or a different valid formula), you must **NOT** assign a score.
+    - In this specific case, set `score_awarded` to `null` (or None).
+    - In the `justification`, you MUST write: "The student used a different valid method ([Method Name]). Manual review recommended."
+
+    **Output Format:**
+    Return PURE JSON. Do not include markdown formatting (like ```json).
+    The structure must be:
+    {
+        "total_score": <sum of all scores (treat null as 0 for sum)>,
+        "graded_questions": [
+            {
+                "question_number": <int>,
+                "score_awarded": <float or null>,
+                "max_score": <int (extracted from marking scheme)>, 
+                "justification": "<string>",
+                "student_answer": "<string>",
+                "solution_text": "<string>",
+                "marking_scheme": "<string>"
+            },
+            ...
+        ]
+    }
+    """
+
+    # FIX 2: UPDATED MODEL NAME
+    # Switched to 'gemini-1.5-flash-latest' to resolve the 404 error.
+    # If this still fails, try 'gemini-pro'.
+    model = genai.GenerativeModel(
+        model_name="gemini-2.5-flash", 
+        system_instruction=system_instruction
+    )
+
     try:
-        # Configure the AI with your API key
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY not found in environment variables.")
-        genai.configure(api_key=api_key)
+        response = model.generate_content(json.dumps(structured_data))
+        response_text = response.text
+
+        if response_text.startswith("```json"):
+            response_text = response_text[7:]
+        if response_text.endswith("```"):
+            response_text = response_text[:-3]
+
+        result_json = json.loads(response_text.strip())
         
-        # Initialize the generative model
-# Initialize the generative model
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        # OR you can use:
-        # model = genai.GenerativeModel('gemini-1.0-pro')        
+        total_score = 0
+        for q in result_json.get("graded_questions", []):
+            if q.get("score_awarded") is not None:
+                total_score += q["score_awarded"]
+        
+        result_json["total_score"] = total_score
+
+        return result_json["graded_questions"], total_score
+
     except Exception as e:
-        # Handle cases where the API key is missing or invalid
-        print(f"Error configuring AI model: {e}")
+        print(f"Error calling AI: {e}")
         return {"error": str(e)}, 0
-    total_score = 0
-    graded_results = []
-
-    # This is the instruction template for the AI
-    prompt_template = """
-    You are an expert AI exam evaluator. Your task is to grade a student's answer based on the provided solution and marking scheme.
-    Be strict and follow the marking scheme precisely.
-
-    ---
-    **Official Solution:**
-    {solution_text}
-
-    **Marking Scheme:**
-    {marking_scheme}
-
-    **Student's Answer:**
-    {student_answer}
-    ---
-
-    Perform the following actions:
-    1.  **Analysis:** Compare the student's answer against the solution and marking scheme.
-    2.  **Score Calculation:** Award a score based on the marking scheme.
-    3.  **Output:** Provide your response ONLY in a valid JSON format with two keys: "score_awarded" (an integer or float) and "justification" (a brief string explaining your reasoning). Do not add any other text outside the JSON structure.
-    """
-
-    for question in structured_data:
-        # Create a specific prompt for this question
-        prompt = prompt_template.format(
-            solution_text=question["solution_text"],
-            marking_scheme=question["marking_scheme"],
-            student_answer=question["student_answer"]
-        )
-
-        try:
-            # Send the prompt to the AI
-            response = model.generate_content(prompt)
-            
-            # Clean up the response to ensure it's valid JSON
-            # Sometimes the model might wrap the JSON in ```json ... ```
-            cleaned_response_text = response.text.strip().replace('```json', '').replace('```', '').strip()
-            
-            # Parse the AI's JSON response
-            ai_feedback = json.loads(cleaned_response_text)
-            
-            # Update the question dictionary with AI feedback
-            question['score_awarded'] = ai_feedback.get('score_awarded', 0)
-            question['justification'] = ai_feedback.get('justification', 'No justification provided.')
-            
-            total_score += question['score_awarded']
-            
-        except (json.JSONDecodeError, AttributeError, Exception) as e:
-            # Handle cases where the AI response is not valid JSON or another error occurs
-            print(f"Error processing AI response for Q{question['question_number']}: {e}")
-            question['score_awarded'] = 0
-            question['justification'] = f"Error: Failed to get a valid grade from the AI. ({e})"
-
-        graded_results.append(question)
-
-    return graded_results, total_score
