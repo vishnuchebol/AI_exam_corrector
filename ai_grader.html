@@ -191,11 +191,13 @@
         const formattedQuestions = backendData.graded_questions.map(q => {
             let maxScore = 0;
             // Robust check for marking scheme string vs raw number
-            if (q.marking_scheme && typeof q.marking_scheme === 'string') {
+            // Prioritize the explicit max_score from the AI
+            if (q.max_score !== undefined && q.max_score !== null) {
+                maxScore = q.max_score;
+            } else if (q.marking_scheme && typeof q.marking_scheme === 'string') {
+                // Fallback: Try to extract from marking scheme text
                 const match = q.marking_scheme.match(/T[oa]tal: (\d+) marks?/i);
                 maxScore = match ? parseInt(match[1], 10) : 0;
-            } else if (q.max_score) {
-                 maxScore = q.max_score; // If AI returned it directly
             }
             
             totalMaxScore += maxScore;
