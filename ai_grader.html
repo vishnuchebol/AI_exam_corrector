@@ -43,26 +43,26 @@
             </svg>
             <h1 class="text-3xl font-bold text-gray-800">AI Grader</h1>
         </div>
-        <p class="text-gray-600 mb-8 text-center flex-grow-0">Upload the solution key and student answer sheets to begin the automated grading process.</p>
+        <p class="text-gray-600 mb-8 text-center flex-grow-0">Upload the solution key and student answer sheets (PDF, Text, or Image) to begin.</p>
         
         <div id="file-upload-section" class="flex-grow">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Box 1: Solution Key -->
                 <div class="flex flex-col">
-                    <label class="block text-lg font-semibold text-gray-700 mb-3">1. Solution Key (.txt)</label>
+                    <label class="block text-lg font-semibold text-gray-700 mb-3">1. Solution Key</label>
                     <div id="solution-key-dropzone" class="flex flex-col justify-center items-center w-full px-6 py-16 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 flex-grow">
                         <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                        <p class="mt-2 text-sm text-gray-600">Click to upload or drag & drop</p>
+                        <p class="mt-2 text-sm text-gray-600">PDF, TXT, or Image</p>
                     </div>
                     <div id="solution-key-file" class="hidden mt-4"></div> 
                 </div>
 
                 <!-- Box 2: Student Answer Sheet -->
                 <div class="flex flex-col">
-                    <label class="block text-lg font-semibold text-gray-700 mb-3">2. Student Answer Sheet (.txt)</label>
+                    <label class="block text-lg font-semibold text-gray-700 mb-3">2. Student Answer Sheet</label>
                     <div id="student-sheets-dropzone" class="flex flex-col justify-center items-center w-full px-6 py-16 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 flex-grow">
                         <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                        <p class="mt-2 text-sm text-gray-600">Click to upload or drag & drop</p>
+                        <p class="mt-2 text-sm text-gray-600">PDF, TXT, or Image</p>
                     </div>
                     <div id="student-sheets-file" class="hidden mt-4"></div>
                 </div>
@@ -127,7 +127,8 @@
     function handleFileUpload(dropzone, fileDiv, fileType) {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = ".txt"; 
+        // Updated Accept attribute to include PDFs and Images
+        input.accept = ".txt,.pdf,.jpg,.jpeg,.png"; 
         input.onchange = e => {
             const file = e.target.files[0];
             if (file) {
@@ -188,19 +189,24 @@
     function formatBackendResponse(backendData) {
         let totalMaxScore = 0;
         const formattedQuestions = backendData.graded_questions.map(q => {
-            const match = q.marking_scheme.match(/T[oa]tal: (\d+) marks?/i);
-            const maxScore = match ? parseInt(match[1], 10) : 0;
+            let maxScore = 0;
+            // Robust check for marking scheme string vs raw number
+            if (q.marking_scheme && typeof q.marking_scheme === 'string') {
+                const match = q.marking_scheme.match(/T[oa]tal: (\d+) marks?/i);
+                maxScore = match ? parseInt(match[1], 10) : 0;
+            } else if (q.max_score) {
+                 maxScore = q.max_score; // If AI returned it directly
+            }
+            
             totalMaxScore += maxScore;
 
-            // DETECT IF REVIEW IS NEEDED
-            // If score is null/undefined OR if the justification explicitly mentions "different method"
             const needsReview = q.score_awarded === null || (q.justification && q.justification.toLowerCase().includes("different method"));
 
             return {
                 id: q.question_number,
-                question: q.solution_text.split('\n')[0],
-                correctAnswer: q.solution_text,
-                studentAnswer: q.student_answer,
+                question: q.solution_text ? q.solution_text.split('\n')[0] : "Question " + q.question_number,
+                correctAnswer: q.solution_text || "Refer to Solution Document",
+                studentAnswer: q.student_answer || "Refer to Answer Document",
                 score: q.score_awarded,
                 maxScore: maxScore,
                 explanation: q.justification,
@@ -219,7 +225,6 @@
         let newTotal = 0;
         let maxTotal = 0;
         
-        // Loop through all score inputs
         document.querySelectorAll('.score-input').forEach(input => {
             const val = parseFloat(input.value);
             const max = parseFloat(input.dataset.max);
@@ -230,7 +235,6 @@
             maxTotal += max;
         });
 
-        // Update the Summary Display
         const scoreDisplay = document.getElementById('total-score-display');
         const progressBar = document.getElementById('total-progress-bar');
         const percentageText = document.getElementById('total-percentage');
@@ -247,7 +251,6 @@
         resultsView.classList.remove('hidden');
         reportContainer.innerHTML = ''; 
 
-        // 1. Summary Card
         const percentage = results.maxScore > 0 ? (results.totalScore / results.maxScore) * 100 : 0;
         const summaryCard = `
             <div class="bg-white p-6 rounded-xl shadow-lg mb-6 sticky top-0 z-10 border-b-4 border-blue-600">
@@ -267,21 +270,15 @@
             </div>`;
         reportContainer.insertAdjacentHTML('beforeend', summaryCard);
 
-        // 2. Question Cards
         results.questions.forEach(q => {
-            
-            // Determine styling based on Review Status
             const isReview = q.needsReview;
             const borderColor = isReview ? 'border-amber-400' : 'border-gray-200';
             const headerBg = isReview ? 'bg-amber-50' : 'bg-white';
             const scoreColor = isReview ? 'text-amber-600' : 'text-blue-600';
-            
-            // If review needed, value is empty to force input. If scored, show score.
             const inputValue = (q.score !== null && !isNaN(q.score)) ? q.score : ''; 
 
             const questionCard = `
                 <div class="bg-white p-6 rounded-xl shadow-lg border-2 ${borderColor}">
-                    <!-- Question Header with Manual Score Input -->
                     <div class="flex justify-between items-start mb-4 pb-4 border-b ${headerBg} -m-6 p-6 rounded-t-xl">
                         <div class="w-3/4">
                             <div class="flex items-center gap-2 mb-1">
@@ -307,8 +304,6 @@
                              </div>
                         </div>
                     </div>
-                    
-                    <!-- Answers & Justification -->
                     <div class="space-y-4 text-sm mt-6">
                         <div class="p-4 bg-yellow-50 text-yellow-900 rounded-lg border border-yellow-200">
                             <strong class="font-semibold block mb-1">Student's Answer:</strong>
@@ -319,7 +314,6 @@
                             <p class="whitespace-pre-wrap font-mono text-xs md:text-sm">${q.correctAnswer}</p>
                         </div>
                     </div>
-                    
                     <div class="mt-4 pt-4 border-t border-gray-200">
                         <p class="text-sm font-semibold text-gray-700 flex items-center gap-2">
                             ${isReview ? '⚠️ AI Flag:' : 'AI Justification:'}
@@ -329,8 +323,6 @@
                 </div>`;
             reportContainer.insertAdjacentHTML('beforeend', questionCard);
         });
-        
-        // Run once to set initial total if there are manual/null entries
         recalculateTotal();
     }
 
@@ -339,16 +331,13 @@
         studentFile = null;
         resultsView.classList.add('hidden');
         uploadView.classList.remove('hidden');
-        
         fileUploadSection.classList.remove('hidden');
         gradeButton.classList.remove('hidden');
         processingView.classList.add('hidden');
-        
         solutionKeyDropzone.classList.remove('hidden');
         solutionKeyFileDiv.classList.add('hidden');
         studentSheetsDropzone.classList.remove('hidden');
         studentSheetsFileDiv.classList.add('hidden');
-        
         reportContainer.innerHTML = '';
         updateButtonState();
     });
