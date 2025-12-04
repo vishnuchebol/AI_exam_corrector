@@ -60,10 +60,16 @@
 
                 <!-- Box 2: Student Answer Sheet -->
                 <div class="flex flex-col">
-                    <label class="block text-lg font-semibold text-gray-700 mb-3">2. Student Answer Sheet</label>
-                    <div id="student-sheets-dropzone" class="flex flex-col justify-center items-center w-full px-6 py-16 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 flex-grow">
+                    <label class="block text-lg font-semibold text-gray-700 mb-3">2. Student Answer Sheets (Select Multiple)</label>
+                    <div id="student-sheets-dropzone" class="flex flex-col justify-center items-center w-full px-6 py-16 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 flex-grow relative">
                         <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
                         <p class="mt-2 text-sm text-gray-600">PDF, TXT, or Image</p>
+                        <p class="mt-1 text-xs text-gray-400">(Click to select files)</p>
+                        <div class="mt-4 z-10">
+                            <span id="upload-folder-link" class="text-blue-600 hover:text-blue-800 text-sm font-medium hover:underline px-2 py-1 rounded">
+                                Or upload a folder
+                            </span>
+                        </div>
                     </div>
                     <div id="student-sheets-file" class="hidden mt-4"></div>
                 </div>
@@ -81,17 +87,67 @@
         </button>
     </div>
 
-    <!-- Results View -->
+    <!-- Dashboard View -->
+    <div id="dashboard-view" class="w-full max-w-6xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden hidden" style="min-height: 85vh;">
+        <div class="p-6 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Class Grading Dashboard</h1>
+                <p class="text-sm text-gray-500" id="dashboard-subtitle">Overview of all student submissions</p>
+            </div>
+            <button id="dashboard-reset-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                Grade New Batch
+            </button>
+        </div>
+        
+        <div class="p-6 overflow-y-auto bg-gray-100 flex-1">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 font-medium">Total Students</p>
+                    <p class="text-3xl font-bold text-gray-800" id="stat-total-students">0</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 font-medium">Average Score</p>
+                    <p class="text-3xl font-bold text-blue-600" id="stat-avg-score">0%</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 font-medium">Needs Review</p>
+                    <p class="text-3xl font-bold text-amber-500" id="stat-needs-review">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student File</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="students-table-body">
+                        <!-- Rows injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results View (Detailed) -->
     <div id="results-view" class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden hidden" style="min-height: 85vh;">
         <!-- Header -->
         <div class="p-6 border-b border-gray-200 flex items-center justify-between bg-gray-50">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">Grading Report</h1>
-                <p class="text-sm text-gray-500">Student Answer Analysis</p>
+            <div class="flex items-center gap-4">
+                <button id="back-to-dashboard" class="text-gray-500 hover:text-gray-700 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </button>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800" id="detail-student-name">Student Report</h1>
+                    <p class="text-sm text-gray-500">Detailed Answer Analysis</p>
+                </div>
             </div>
-            <button id="reset-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
-                Grade Another
-            </button>
         </div>
         
         <!-- Report Body -->
@@ -102,41 +158,74 @@
 
 <script>
     const uploadView = document.getElementById('upload-view');
+    const dashboardView = document.getElementById('dashboard-view');
     const resultsView = document.getElementById('results-view');
     const gradeButton = document.getElementById('grade-button');
     const fileUploadSection = document.getElementById('file-upload-section');
     const processingView = document.getElementById('processing-view');
     const processingStatus = document.getElementById('processing-status');
-    const resetButton = document.getElementById('reset-button');
+    const dashboardResetButton = document.getElementById('dashboard-reset-button');
+    const backToDashboardButton = document.getElementById('back-to-dashboard');
+    
     const solutionKeyDropzone = document.getElementById('solution-key-dropzone');
     const studentSheetsDropzone = document.getElementById('student-sheets-dropzone');
     const solutionKeyFileDiv = document.getElementById('solution-key-file');
     const studentSheetsFileDiv = document.getElementById('student-sheets-file');
+    const uploadFolderLink = document.getElementById('upload-folder-link');
+    
     const reportContainer = document.getElementById('report-container');
+    const studentsTableBody = document.getElementById('students-table-body');
 
     let solutionFile = null;
-    let studentFile = null;
+    let studentFiles = []; // Array to store multiple files
+    let allGradedResults = []; // Store backend response
 
     function updateButtonState() {
-        gradeButton.disabled = !(solutionFile && studentFile);
+        gradeButton.disabled = !(solutionFile && studentFiles.length > 0);
     }
 
     function createFileItem(fileName) {
-        return `<div class="file-item flex items-center bg-blue-100 text-blue-800 text-sm font-semibold px-4 py-2 rounded-lg transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><span>${fileName}</span></div>`;
+        return `<div class="file-item flex items-center bg-blue-100 text-blue-800 text-sm font-semibold px-4 py-2 rounded-lg transition-all mb-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><span>${fileName}</span></div>`;
     }
 
-    function handleFileUpload(dropzone, fileDiv, fileType) {
+    function handleFileUpload(dropzone, fileDiv, fileType, isFolder = false) {
         const input = document.createElement('input');
         input.type = 'file';
-        // Updated Accept attribute to include PDFs and Images
         input.accept = ".txt,.pdf,.jpg,.jpeg,.png"; 
+        
+        if (fileType === 'student') {
+            if (isFolder) {
+                input.webkitdirectory = true;
+                input.directory = true; // For Firefox support just in case
+            } else {
+                input.multiple = true; // Allow multiple files for students
+            }
+        }
+
         input.onchange = e => {
-            const file = e.target.files[0];
-            if (file) {
-                if (fileType === 'solution') solutionFile = file;
-                else studentFile = file;
+            let files = Array.from(e.target.files);
+            
+            // Filter out hidden files or non-relevant files if uploading folder
+            if (isFolder) {
+                files = files.filter(f => !f.name.startsWith('.') && (f.name.endsWith('.txt') || f.name.endsWith('.pdf') || f.name.endsWith('.jpg') || f.name.endsWith('.png') || f.name.endsWith('.jpeg')));
+            }
+
+            if (files.length > 0) {
+                if (fileType === 'solution') {
+                    solutionFile = files[0];
+                    fileDiv.innerHTML = createFileItem(solutionFile.name);
+                } else {
+                    studentFiles = files;
+                    fileDiv.innerHTML = '';
+                    // Limit display to first 5 files to avoid clutter
+                    files.slice(0, 5).forEach(f => {
+                        fileDiv.innerHTML += createFileItem(f.name);
+                    });
+                    if (files.length > 5) {
+                        fileDiv.innerHTML += `<div class="text-sm text-gray-500 italic">+ ${files.length - 5} more files</div>`;
+                    }
+                }
                 dropzone.classList.add('hidden');
-                fileDiv.innerHTML = createFileItem(file.name);
                 fileDiv.classList.remove('hidden');
                 updateButtonState();
             }
@@ -145,7 +234,18 @@
     }
 
     solutionKeyDropzone.addEventListener('click', () => handleFileUpload(solutionKeyDropzone, solutionKeyFileDiv, 'solution'));
-    studentSheetsDropzone.addEventListener('click', () => handleFileUpload(studentSheetsDropzone, studentSheetsFileDiv, 'student'));
+    
+    studentSheetsDropzone.addEventListener('click', (e) => {
+        // Prevent triggering if the folder link was clicked
+        if (e.target !== uploadFolderLink) {
+            handleFileUpload(studentSheetsDropzone, studentSheetsFileDiv, 'student');
+        }
+    });
+
+    uploadFolderLink.addEventListener('click', (e) => {
+        e.stopPropagation(); // Stop bubbling to parent dropzone
+        handleFileUpload(studentSheetsDropzone, studentSheetsFileDiv, 'student', true);
+    });
 
     gradeButton.addEventListener('click', async () => {
         fileUploadSection.classList.add('hidden');
@@ -155,10 +255,14 @@
         
         const formData = new FormData();
         formData.append('solutionKey', solutionFile);
-        formData.append('studentSheet', studentFile);
+        
+        // Append all student files
+        studentFiles.forEach(file => {
+            formData.append('studentSheet', file);
+        });
 
         try {
-            processingStatus.textContent = "Sending to AI for grading...";
+            processingStatus.textContent = `Sending ${studentFiles.length} files to AI for grading...`;
             const response = await fetch('http://127.0.0.1:8000/api/grade/', {
                 method: 'POST',
                 body: formData
@@ -169,12 +273,20 @@
                 throw new Error(errorData.error || `Server responded with ${response.status}`);
             }
             
-            const backendResults = await response.json();
+            const backendResponse = await response.json();
             processingStatus.textContent = "Formatting report...";
             await new Promise(resolve => setTimeout(resolve, 500)); 
 
-            const formattedResults = formatBackendResponse(backendResults);
-            showResultsInterface(formattedResults);
+            // Process results
+            allGradedResults = backendResponse.results.map(res => formatSingleResult(res));
+            
+            // Handle errors if any
+            if (backendResponse.errors && backendResponse.errors.length > 0) {
+                console.warn("Some files failed to grade:", backendResponse.errors);
+                // Ideally show these in UI, for now we just log
+            }
+
+            showDashboard();
 
         } catch (error) {
             console.error('Error:', error);
@@ -187,22 +299,18 @@
         }
     });
     
-    function formatBackendResponse(backendData) {
+    function formatSingleResult(backendResult) {
         let totalMaxScore = 0;
-        const formattedQuestions = backendData.graded_questions.map(q => {
+        const formattedQuestions = backendResult.graded_questions.map(q => {
             let maxScore = 0;
-            // Robust check for marking scheme string vs raw number
-            // Prioritize the explicit max_score from the AI
             if (q.max_score !== undefined && q.max_score !== null) {
                 maxScore = q.max_score;
             } else if (q.marking_scheme && typeof q.marking_scheme === 'string') {
-                // Fallback: Try to extract from marking scheme text
                 const match = q.marking_scheme.match(/T[oa]tal: (\d+) marks?/i);
                 maxScore = match ? parseInt(match[1], 10) : 0;
             }
             
             totalMaxScore += maxScore;
-
             const needsReview = q.score_awarded === null || (q.justification && q.justification.toLowerCase().includes("different method"));
 
             return {
@@ -217,41 +325,158 @@
             };
         });
 
+        // Use total score from backend if available, else sum it up
+        const totalScore = backendResult.total_score !== undefined ? backendResult.total_score : 0;
+
         return {
-            totalScore: backendData.total_score,
+            filename: backendResult.filename,
+            totalScore: totalScore,
             maxScore: totalMaxScore,
-            questions: formattedQuestions
+            questions: formattedQuestions,
+            needsReview: formattedQuestions.some(q => q.needsReview)
         };
     }
 
+    function showDashboard() {
+        uploadView.classList.add('hidden');
+        processingView.classList.add('hidden');
+        resultsView.classList.add('hidden');
+        dashboardView.classList.remove('hidden');
+
+        // Update Stats
+        document.getElementById('stat-total-students').textContent = allGradedResults.length;
+        
+        const totalScoreSum = allGradedResults.reduce((sum, r) => sum + r.totalScore, 0);
+        const totalMaxSum = allGradedResults.reduce((sum, r) => sum + r.maxScore, 0);
+        const avgPercentage = totalMaxSum > 0 ? (totalScoreSum / totalMaxSum) * 100 : 0;
+        document.getElementById('stat-avg-score').textContent = `${avgPercentage.toFixed(1)}%`;
+
+        const reviewCount = allGradedResults.filter(r => r.needsReview).length;
+        document.getElementById('stat-needs-review').textContent = reviewCount;
+
+        // Populate Table
+        studentsTableBody.innerHTML = '';
+        allGradedResults.forEach((result, index) => {
+            const percentage = result.maxScore > 0 ? (result.totalScore / result.maxScore) * 100 : 0;
+            const statusBadge = result.needsReview 
+                ? '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">Needs Review</span>'
+                : '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Graded</span>';
+
+            const row = `
+                <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="viewStudentDetail(${index})">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
+                                ${result.filename.substring(0, 2).toUpperCase()}
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${result.filename}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900 font-bold">${result.totalScore} <span class="text-gray-400 font-normal">/ ${result.maxScore}</span></div>
+                        <div class="text-xs text-gray-500">${percentage.toFixed(1)}%</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${statusBadge}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="text-blue-600 hover:text-blue-900">View Report</button>
+                    </td>
+                </tr>
+            `;
+            studentsTableBody.insertAdjacentHTML('beforeend', row);
+        });
+    }
+
+    let currentStudentIndex = -1;
+
+    window.viewStudentDetail = function(index) {
+        currentStudentIndex = index;
+        const result = allGradedResults[index];
+        dashboardView.classList.add('hidden');
+        resultsView.classList.remove('hidden');
+        
+        document.getElementById('detail-student-name').textContent = result.filename;
+        renderDetailedReport(result);
+    };
+
+    backToDashboardButton.addEventListener('click', () => {
+        resultsView.classList.add('hidden');
+        dashboardView.classList.remove('hidden');
+        showDashboard(); // Re-render dashboard to show updated scores
+    });
+
+    dashboardResetButton.addEventListener('click', () => {
+        resetApp();
+    });
+
+    function resetApp() {
+        solutionFile = null;
+        studentFiles = [];
+        allGradedResults = [];
+        currentStudentIndex = -1;
+        
+        dashboardView.classList.add('hidden');
+        resultsView.classList.add('hidden');
+        uploadView.classList.remove('hidden');
+        
+        fileUploadSection.classList.remove('hidden');
+        gradeButton.classList.remove('hidden');
+        processingView.classList.add('hidden');
+        
+        solutionKeyDropzone.classList.remove('hidden');
+        solutionKeyFileDiv.classList.add('hidden');
+        studentSheetsDropzone.classList.remove('hidden');
+        studentSheetsFileDiv.classList.add('hidden');
+        
+        updateButtonState();
+    }
+
     function recalculateTotal() {
+        if (currentStudentIndex === -1) return;
+
         let newTotal = 0;
         let maxTotal = 0;
         
-        document.querySelectorAll('.score-input').forEach(input => {
+        const inputs = document.querySelectorAll('.score-input');
+        inputs.forEach((input, index) => {
             const val = parseFloat(input.value);
             const max = parseFloat(input.dataset.max);
             
             if (!isNaN(val)) {
                 newTotal += val;
+                // Update the specific question score in the global state
+                if (allGradedResults[currentStudentIndex].questions[index]) {
+                    allGradedResults[currentStudentIndex].questions[index].score = val;
+                }
             }
             maxTotal += max;
         });
+
+        // Update the total score in the global state
+        allGradedResults[currentStudentIndex].totalScore = newTotal;
+        
+        // If all scores are filled/valid, we could potentially clear 'needsReview', 
+        // but for now let's just update the score.
+        // Optional: Check if any question still needs review? 
+        // Let's assume manual edit implies review done for that question, 
+        // but let's stick to just updating scores as requested.
 
         const scoreDisplay = document.getElementById('total-score-display');
         const progressBar = document.getElementById('total-progress-bar');
         const percentageText = document.getElementById('total-percentage');
 
-        scoreDisplay.innerHTML = `${newTotal} <span class="text-2xl text-gray-400">/ ${maxTotal}</span>`;
-        
-        const percentage = maxTotal > 0 ? (newTotal / maxTotal) * 100 : 0;
-        progressBar.style.width = `${percentage}%`;
-        percentageText.textContent = `${percentage.toFixed(1)}%`;
+        if (scoreDisplay) {
+            scoreDisplay.innerHTML = `${newTotal} <span class="text-2xl text-gray-400">/ ${maxTotal}</span>`;
+            const percentage = maxTotal > 0 ? (newTotal / maxTotal) * 100 : 0;
+            progressBar.style.width = `${percentage}%`;
+            percentageText.textContent = `${percentage.toFixed(1)}%`;
+        }
     }
 
-    function showResultsInterface(results) {
-        uploadView.classList.add('hidden');
-        resultsView.classList.remove('hidden');
+    function renderDetailedReport(results) {
         reportContainer.innerHTML = ''; 
 
         const percentage = results.maxScore > 0 ? (results.totalScore / results.maxScore) * 100 : 0;
@@ -326,24 +551,7 @@
                 </div>`;
             reportContainer.insertAdjacentHTML('beforeend', questionCard);
         });
-        recalculateTotal();
     }
-
-    resetButton.addEventListener('click', () => {
-        solutionFile = null;
-        studentFile = null;
-        resultsView.classList.add('hidden');
-        uploadView.classList.remove('hidden');
-        fileUploadSection.classList.remove('hidden');
-        gradeButton.classList.remove('hidden');
-        processingView.classList.add('hidden');
-        solutionKeyDropzone.classList.remove('hidden');
-        solutionKeyFileDiv.classList.add('hidden');
-        studentSheetsDropzone.classList.remove('hidden');
-        studentSheetsFileDiv.classList.add('hidden');
-        reportContainer.innerHTML = '';
-        updateButtonState();
-    });
 
     updateButtonState();
 </script>

@@ -1,0 +1,19 @@
+Student: Alice (Perfect Score)
+
+1) T(n) = 2T(n/2) + n
+Here a=2, b=2, and f(n)=n.
+We compare n to n^(log_2 2) = n^1 = n.
+They are equal, so it falls under Case 2 of the Master Theorem.
+Thus, T(n) = Theta(n log n).
+
+2) Proof: Sum of first n odd integers is n^2.
+Base Case: For n=1, sum is 1. 1^2 = 1. Correct.
+Assume true for n=k: 1 + 3 + ... + (2k-1) = k^2.
+For n=k+1:
+Sum = k^2 + (2(k+1)-1)
+    = k^2 + 2k + 1
+    = (k+1)^2.
+The statement holds for all n.
+
+3) BFS uses a Queue to visit nodes level by level. It finds the shortest path in unweighted graphs.
+DFS uses a Stack (recursion) to go deep into the graph. It is good for detecting cycles.

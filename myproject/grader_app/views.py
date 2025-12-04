@@ -9,28 +9,58 @@ class GradeView(APIView):
 
     def post(self, request, *args, **kwargs):
         # 1. Get files from the request
-        solution_key_file = request.data.get('solutionKey')
-        student_sheet_file = request.data.get('studentSheet')
+        solution_key_file = request.FILES.get('solutionKey')
+        # Use getlist to retrieve multiple files for the same key
+        student_sheet_files = request.FILES.getlist('studentSheet')
 
         # 2. Basic Validation
-        if not solution_key_file or not student_sheet_file:
+        if not solution_key_file or not student_sheet_files:
             return Response(
-                {"error": "Both solutionKey and studentSheet files are required."},
+                {"error": "Both solutionKey and at least one studentSheet file are required."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        results = []
+        errors = []
+
         try:
-            # 3. Call the grading logic (handles both Text and PDF/Image internally)
-            graded_data, total_score = perform_grading(solution_key_file, student_sheet_file)
+            # 3. Iterate through each student sheet
+            for student_file in student_sheet_files:
+                # Reset solution file pointer for each iteration if it's read multiple times
+                # However, perform_grading might read it. 
+                # Ideally, we should read solution once, but perform_grading takes a file object.
+                # We need to ensure perform_grading doesn't close it or we seek(0) before reuse.
+                # Let's check perform_grading implementation. It does seek(0) in some cases.
+                # To be safe, we should seek(0) on solution_key_file before each call.
+                solution_key_file.seek(0)
+                
+                try:
+                    graded_data, total_score = perform_grading(solution_key_file, student_file)
+                    
+                    if "error" in graded_data:
+                         errors.append({
+                             "filename": student_file.name,
+                             "error": graded_data["error"]
+                         })
+                    else:
+                        results.append({
+                            "filename": student_file.name,
+                            "total_score": total_score,
+                            "graded_questions": graded_data
+                        })
+                except Exception as e:
+                    errors.append({
+                        "filename": student_file.name,
+                        "error": str(e)
+                    })
 
-            # 4. Check for errors returned by the utility
-            if "error" in graded_data:
-                return Response(graded_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-            # 5. Construct success response
+            # 5. Construct final response
             final_response = {
-                "total_score": total_score,
-                "graded_questions": graded_data
+                "results": results,
+                "errors": errors,
+                "total_processed": len(student_sheet_files),
+                "success_count": len(results),
+                "error_count": len(errors)
             }
             
             return Response(final_response, status=status.HTTP_200_OK)
