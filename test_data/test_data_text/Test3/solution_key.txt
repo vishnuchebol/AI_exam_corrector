@@ -1,0 +1,48 @@
+Exam: Introduction to Algorithms & Logic
+Date: 2025-12-05
+
+1) Solve the recurrence relation T(n) = 2T(n/2) + n.
+Solution:
+Using the Master Theorem:
+a = 2, b = 2, f(n) = n.
+n^(log_b a) = n^(log_2 2) = n^1 = n.
+Since f(n) = Theta(n^(log_b a)), this is Case 2.
+Therefore, T(n) = Theta(n log n).
+
+Marking Scheme:
+- Identifying a, b, f(n): 1 mark
+- Calculating n^(log_b a): 1 mark
+- Identifying Case 2: 1 mark
+- Final Answer: 2 marks
+Total: 5 marks
+
+2) Prove that the sum of the first n odd integers is n^2.
+Solution:
+Proof by Induction.
+Base Case (n=1): Sum = 1. n^2 = 1^2 = 1. Holds.
+Inductive Hypothesis: Assume true for n=k. Sum(k) = k^2.
+Inductive Step: Show for n=k+1.
+Sum(k+1) = Sum(k) + (2(k+1)-1)
+         = k^2 + 2k + 2 - 1
+         = k^2 + 2k + 1
+         = (k+1)^2.
+Q.E.D.
+
+Marking Scheme:
+- Base Case: 1 mark
+- Inductive Hypothesis: 1 mark
+- Inductive Step setup: 1 mark
+- Algebraic manipulation: 1 mark
+- Conclusion: 1 mark
+Total: 5 marks
+
+3) Explain the difference between BFS and DFS.
+Solution:
+BFS (Breadth-First Search) explores neighbors layer by layer using a Queue data structure. It is optimal for finding the shortest path in unweighted graphs.
+DFS (Depth-First Search) explores as deep as possible along each branch before backtracking, using a Stack (or recursion). It is useful for topological sorting and cycle detection.
+
+Marking Scheme:
+- Mentioning Queue vs Stack: 2 marks
+- Mentioning traversal order (Layer vs Deep): 2 marks
+- Mentioning one application for each: 1 mark
+Total: 5 marks

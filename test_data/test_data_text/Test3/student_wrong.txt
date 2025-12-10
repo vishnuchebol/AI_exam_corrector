@@ -1,0 +1,7 @@
+Student: Dave (Wrong)
+
+1) T(n) = n^2. Because there are two T's.
+
+2) The sum is n(n+1)/2. This is the formula for sum of integers.
+
+3) BFS stands for Best First Search. It finds the best node. DFS stands for Data First Search.

@@ -1,0 +1,12 @@
+Student: Missing Question User
+
+1) Master Method:
+a=2, b=2, f(n)=n.
+n^(log_2 2) = n.
+f(n) is Theta(n).
+Case 2 applies.
+Result: Theta(n log n).
+
+3) BFS and DFS:
+BFS: Breadth-First, uses Queue, shortest path in unweighted.
+DFS: Depth-First, uses Stack, finding cycles.
