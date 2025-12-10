@@ -1,6 +1,6 @@
 # AI Exam Corrector
 
-An AI-powered automated grading system that uses Google's Gemini API to evaluate student answer sheets against a solution key. It supports both text-based and image-based (handwritten) submissions.
+An AI-powered automated grading system that uses Google's Gemini API to evaluate student answer sheets against a solution key. It supports both text-based and image-based (handwritten) submissions. It has not been deployed yet.
 
 ## Features
 
