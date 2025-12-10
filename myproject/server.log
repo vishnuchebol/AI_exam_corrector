@@ -1,0 +1,8 @@
+Watching for file changes with StatReloader
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1765289128.994756 5292894 alts_credentials.cc:93] ALTS creds ignored. Not running on GCP and untrusted ALTS is not enabled.
+[09/Dec/2025 14:06:04] "POST /api/grade/ HTTP/1.1" 200 8942
+Bad Request: /api/grade/
+[09/Dec/2025 14:06:22] "POST /api/grade/ HTTP/1.1" 400 77
+[09/Dec/2025 14:06:53] "POST /api/grade/ HTTP/1.1" 200 8923
+[09/Dec/2025 14:07:24] "POST /api/grade/ HTTP/1.1" 200 1061
