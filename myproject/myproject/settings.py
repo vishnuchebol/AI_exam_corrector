@@ -128,6 +128,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # settings.py
 
 # ... at the bottom of the file
+import os
+from dotenv import load_dotenv
+
+load_dotenv(BASE_DIR / 'project.env')
+
 CORS_ALLOW_ALL_ORIGINS = True
 
-GEMINI_API_KEY = "AIzaSyBeZNQpwguvcA1BXIQjqxt-gEwoDOyaH2I"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
